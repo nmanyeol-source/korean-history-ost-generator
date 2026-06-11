@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>[0606, 만열] 한국 역사 뮤비 가사·OST 생성기</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero">
+        <div class="hero__content">
+          <p class="eyebrow">역사 서사 · AI 음악 프롬프트 · 뮤비 스토리보드</p>
+          <h1>[0606, 만열] 한국 역사 뮤비 가사·OST 생성기</h1>
+          <p class="intro">
+            한국사의 검증된 사실과 창작적 감정 해석을 분리해, 학생들이 역사 왜곡 없이
+            가사와 OST 프롬프트를 설계하도록 돕는 교육용 인터랙티브 도구입니다.
+          </p>
+        </div>
+      </section>
+
+      <section class="workspace" aria-label="생성기 작업 영역">
+        <form class="controls" id="generator-form">
+          <div class="toolbar">
+            <div>
+              <p class="panel-label">입력 선택</p>
+              <h2>프로젝트 설정</h2>
+            </div>
+            <button class="icon-button" type="button" id="reset-button" title="초기화" aria-label="초기화">
+              ↺
+            </button>
+          </div>
+
+          <div class="field-grid" id="field-grid"></div>
+
+          <label class="field field--wide">
+            <span>추가 요청</span>
+            <textarea id="custom-note" rows="4" placeholder="예: 후렴을 더 웅장하게, 학생 합창이 어울리게, 역사 설명을 더 엄숙하게"></textarea>
+          </label>
+
+          <div class="actions">
+            <button type="submit" class="primary-button">생성하기</button>
+            <button type="button" class="secondary-button" id="copy-button">결과 복사</button>
+          </div>
+        </form>
+
+        <section class="result-pane" aria-live="polite">
+          <div class="result-header">
+            <div>
+              <p class="panel-label">AI 최종 출력</p>
+              <h2 id="result-title">역사 OST 초안</h2>
+            </div>
+            <span class="badge" id="preset-badge">프리셋 대기</span>
+          </div>
+
+          <div class="preset-summary" id="preset-summary"></div>
+          <article class="output" id="output"></article>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
