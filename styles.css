@@ -26,6 +26,7 @@ body {
 }
 
 button,
+input,
 select,
 textarea {
   font: inherit;
@@ -142,6 +143,7 @@ h2 {
   font-weight: 800;
 }
 
+input,
 select,
 textarea {
   width: 100%;
@@ -157,18 +159,32 @@ select {
   padding: 0 12px;
 }
 
+input {
+  min-height: 44px;
+  padding: 0 12px;
+}
+
 textarea {
   resize: vertical;
   padding: 12px;
   line-height: 1.55;
 }
 
+input:focus,
 select:focus,
 textarea:focus,
 .icon-button:focus,
 button:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(31, 111, 104, 0.16);
+}
+
+.custom-subject-input {
+  margin-top: 4px;
+}
+
+.custom-subject-input[hidden] {
+  display: none;
 }
 
 .field--wide {

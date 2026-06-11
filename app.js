@@ -1,7 +1,7 @@
 const appData = {
   options: {
     역사_시대: ["삼국시대", "통일신라", "고려", "조선 시대(단종 테마 포함)", "대한제국", "일제강점기", "독립운동기", "6·25 전쟁기", "한국 현대사"],
-    역사_주제: ["단종이 매화에게 보내는 마지막 편지 (신규)", "전하, 이제 강을 건널 때입니다 (신규)", "정조와 개혁", "사도세자의 비극", "소현세자의 슬픔", "유관순과 독립", "논개의 희생", "이순신의 용기", "덕혜옹주의 상실", "명성황후와 국장", "역사를 지킨 이름 없는 민초들"],
+    역사_주제: ["단종이 매화에게 보내는 마지막 편지 (신규)", "전하, 이제 강을 건널 때입니다 (신규)", "정조와 개혁", "사도세자의 비극", "소현세자의 슬픔", "유관순과 독립", "논개의 희생", "이순신의 용기", "덕혜옹주의 상실", "명성황후와 국장", "역사를 지킨 이름 없는 민초들", "직접 입력"],
     핵심_감정: ["비장함", "충심(忠)", "용기", "그리움", "희생", "숭고함", "비극", "희망", "저항", "송별", "통곡", "결의", "추모"],
     가사_시점: ["역사적 인물의 1인칭 독백", "비극을 바라보는 관찰자(화자)", "영웅을 기리는 백성들의 목소리", "유서 및 편지 형식", "대궐의 통곡", "조국이 인물을 부르는 소리", "왕을 향한 신하의 절개", "후대가 기억하는 노래"],
     가사_스타일: ["비극적 역사 발라드", "한국 뮤지컬 스타일", "영화적 서사시", "서정적 민요 발라드", "엄숙한 다큐멘터리풍", "웅장한 애국 찬가", "애절한 송별곡", "궁중 비극 뮤지컬"],
@@ -85,6 +85,7 @@ const presetSummary = document.querySelector("#preset-summary");
 const presetBadge = document.querySelector("#preset-badge");
 const resultTitle = document.querySelector("#result-title");
 const form = document.querySelector("#generator-form");
+const CUSTOM_SUBJECT_OPTION = "직접 입력";
 
 function renderFields() {
   fields.forEach(([key, label]) => {
@@ -100,11 +101,33 @@ function renderFields() {
       item.textContent = option;
       select.appendChild(item);
     });
+
+    if (key === "역사_주제") {
+      const customInput = document.createElement("input");
+      customInput.className = "custom-subject-input";
+      customInput.id = "custom-subject";
+      customInput.name = "custom-subject";
+      customInput.type = "text";
+      customInput.placeholder = "예: 광개토대왕의 북방 원정, 제주 4·3의 기억, 광주 민주화 운동";
+      customInput.hidden = true;
+      customInput.setAttribute("aria-label", "직접 입력할 역사 주제");
+      field.appendChild(customInput);
+    }
   });
 }
 
 function getValues() {
-  return Object.fromEntries(fields.map(([key]) => [key, document.querySelector(`#${key}`).value]));
+  const values = Object.fromEntries(fields.map(([key]) => [key, document.querySelector(`#${key}`).value]));
+  const selectedSubject = values.역사_주제;
+  const customSubject = document.querySelector("#custom-subject")?.value.trim();
+
+  if (selectedSubject === CUSTOM_SUBJECT_OPTION) {
+    values.역사_주제 = customSubject || "사용자 직접 입력 주제";
+    values.직접입력_주제 = true;
+  }
+
+  values.선택된_역사_주제 = selectedSubject;
+  return values;
 }
 
 function setSelectValue(key, value) {
@@ -124,11 +147,13 @@ function setSelectValue(key, value) {
 
 function applyPreset() {
   const values = getValues();
-  const preset = appData.presets[values.역사_주제];
+  const preset = appData.presets[values.선택된_역사_주제];
 
-  if (!preset) {
-    presetBadge.textContent = "일반 설정";
-    presetSummary.textContent = "선택한 항목을 바탕으로 기본 생성 규칙을 적용합니다.";
+  if (!preset || values.직접입력_주제) {
+    presetBadge.textContent = values.직접입력_주제 ? "직접 입력 주제" : "일반 설정";
+    presetSummary.textContent = values.직접입력_주제
+      ? `"${values.역사_주제}" 주제를 바탕으로 기본 생성 규칙을 적용합니다. 역사적 사실은 수업 자료로 한 번 더 확인하세요.`
+      : "선택한 항목을 바탕으로 기본 생성 규칙을 적용합니다.";
     return values;
   }
 
@@ -192,41 +217,66 @@ function buildDialoguePrompt(values) {
   return `[사용 목적]\nMV 중간에 삽입할 ${narrationRole}을 작성한다. 역사적 사실은 바꾸지 않고, 감정 표현은 창작 대사임을 분명히 한다.\n\n[대사 톤]\n${values.핵심_감정}이 느껴지는 절제된 한국어 문장. 과장된 설명보다 짧고 기억에 남는 문장으로 구성한다.\n\n[샘플 대사]\n1. "${subject}, 이 이름은 오늘도 조용히 우리 곁에 남아 있습니다."\n2. "나는 모든 것을 말할 수 없으나, 이 마음만은 역사 앞에 남기고 갑니다."\n3. "울음은 기록되지 않아도, 그날의 선택은 사라지지 않습니다."\n4. "후대의 우리가 부르는 이 노래가, 잊힌 마음을 다시 밝히게 하소서."\n\n[주의]\n실제 사료에 없는 말은 '창작 대사'로 사용한다. 특정 인물이 실제로 말했다고 단정하지 않는다.`;
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function syncCustomSubjectVisibility() {
+  const subjectSelect = document.querySelector("#역사_주제");
+  const customInput = document.querySelector("#custom-subject");
+  if (!subjectSelect || !customInput) return;
+
+  const shouldShow = subjectSelect.value === CUSTOM_SUBJECT_OPTION;
+  customInput.hidden = !shouldShow;
+  customInput.required = shouldShow;
+  if (shouldShow) customInput.focus();
+}
+
 function renderOutput(values) {
   const fact = factMap[values.역사_주제] || `${values.역사_시대}의 주요 사건과 인물을 검증된 자료로 확인한 뒤 서사를 구성해야 합니다.`;
   const creative = creativeMap[values.역사_주제] || "감정의 독백, 장면 전환, 상징물은 역사적 사실이 아니라 교육용 창작 해석으로 명시합니다.";
   resultTitle.textContent = values.역사_주제.replace(" (신규)", "");
+  const lyrics = buildLyrics(values);
+  const musicPrompt = buildMusicPrompt(values);
+  const storyboard = buildStoryboard(values);
+  const imageVideoPrompt = buildImageVideoPrompt(values);
+  const dialoguePrompt = buildDialoguePrompt(values);
 
   output.innerHTML = `
     <section class="output-section">
       <h3>1. Historical Context</h3>
       <ul class="meta-list">
-        <li>${values.역사_시대}</li>
-        <li>${values.영상_길이}</li>
-        <li>${values.가사_스타일}</li>
+        <li>${escapeHtml(values.역사_시대)}</li>
+        <li>${escapeHtml(values.영상_길이)}</li>
+        <li>${escapeHtml(values.가사_스타일)}</li>
       </ul>
-      <p><strong>Fact:</strong> ${fact}</p>
-      <p><strong>Creative Interpretation:</strong> ${creative}</p>
+      <p><strong>Fact:</strong> ${escapeHtml(fact)}</p>
+      <p><strong>Creative Interpretation:</strong> ${escapeHtml(creative)}</p>
     </section>
     <section class="output-section">
       <h3>2. Lyrics</h3>
-      <pre>${buildLyrics(values)}</pre>
+      <pre>${escapeHtml(lyrics)}</pre>
     </section>
     <section class="output-section">
       <h3>3. AI Music Prompt</h3>
-      <p>${buildMusicPrompt(values)}</p>
+      <p>${escapeHtml(musicPrompt)}</p>
     </section>
     <section class="output-section">
       <h3>4. Cinematic Storyboard</h3>
-      <pre>${buildStoryboard(values)}</pre>
+      <pre>${escapeHtml(storyboard)}</pre>
     </section>
     <section class="output-section">
       <h3>5. Image / Video Prompt</h3>
-      <pre>${buildImageVideoPrompt(values)}</pre>
+      <pre>${escapeHtml(imageVideoPrompt)}</pre>
     </section>
     <section class="output-section">
       <h3>6. Dialogue / Narration Prompt</h3>
-      <pre>${buildDialoguePrompt(values)}</pre>
+      <pre>${escapeHtml(dialoguePrompt)}</pre>
     </section>
   `;
 }
@@ -237,7 +287,11 @@ function generate() {
 }
 
 renderFields();
-document.querySelector("#역사_주제").addEventListener("change", generate);
+document.querySelector("#역사_주제").addEventListener("change", () => {
+  syncCustomSubjectVisibility();
+  generate();
+});
+document.querySelector("#custom-subject").addEventListener("input", generate);
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   generate();
@@ -245,6 +299,7 @@ form.addEventListener("submit", (event) => {
 
 document.querySelector("#reset-button").addEventListener("click", () => {
   form.reset();
+  syncCustomSubjectVisibility();
   generate();
 });
 
